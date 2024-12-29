@@ -13,7 +13,7 @@ const ScreenLockView = ({onUnLock}) => {
   return (
     <div className="mainview" ref={ref}>
       {width === undefined || height === undefined || dpr === undefined ? (
-        <div>{"nope"}</div>
+        <div></div>
       ) : (
         <Canvas width={width} height={height} dpr={dpr} isAnimating={true}>
             <div style={{position: 'absolute'}}>

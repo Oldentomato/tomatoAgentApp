@@ -7,10 +7,10 @@ import Item from '../components/Item'
 import { AnimatePresence } from "framer-motion";
 import { SendOutlined } from '@ant-design/icons';
 import gptImgLogo from '../assets/bot.jpg';
-import userImgLogo from '../assets/user.jpg';
+import Messages from '../components/message.js'
 import {useNavigate} from "react-router-dom"
 import { LogoutOutlined } from '@ant-design/icons';
-import Code from "../components/code";
+// import Code from "../components/code";
 // import Cookies from 'js-cookie';
 import ScreenLockView from "./screenlock";
 import {performToast, ConfirmToast} from '../components/toastInfo'
@@ -30,7 +30,6 @@ const req_option = [
 export default function MainView() {
     const [req, set_req] = useState("chat");
     const [process_id, set_process] = useState("");
-    const [confirm, set_confirm] = useState("yes");
     const [chatRooms, setChatRooms] = useState([]);
     const [chat_uid, setchat_uid] = useState("");
     const navigate = useNavigate();
@@ -42,7 +41,7 @@ export default function MainView() {
     const [messages, setMessages] = useState([{
         text: "say something!",
         isBot: true,
-        iscomponent: false
+        activity_log: []
     }])
     const {defualtAlgorithm, darkAlgorithm} = theme;
 
@@ -98,7 +97,6 @@ export default function MainView() {
                     return result;
                 };
                 fetchAndLogout().then((result)=>{
-                    console.log(result)
                     if(result){
                         navigate('/')
                     }
@@ -118,7 +116,8 @@ export default function MainView() {
         setchat_uid("")
         setMessages([{
             text: "say something!",
-            isBot: true
+            isBot: true,
+            activity_log: []
         }])
     }
 
@@ -155,13 +154,22 @@ export default function MainView() {
                 if (done) break;
                 const text = new TextDecoder("utf-8").decode(value);
                 temp_str += text
-                setAnswer((prevText) => prevText + text);
+                if(text.includes("~")){
+                    setAnswer("생각중");
+                }
+                else{
+                    setAnswer((prevText) => prevText + text);
+                }
+                
             }
             setAnswer("")
             setMessages((prevMessages)=>{
+                // 분리된 결과를 정리
+                const result = temp_str.split(/~+/).map(item => item.trim()).filter(Boolean);
+
                 const updatedMessages = [
                     ...prevMessages,
-                    {text: temp_str, isBot: true, iscomponent: false}
+                    {text: result.at(-1), isBot: true, activity_log: result.slice(0, -1)}
                 ]
                 chatHistory = temp_str
                 return updatedMessages
@@ -174,56 +182,55 @@ export default function MainView() {
         setMessages((prevMessages)=>{
             const updatedMessages = [
                 ...prevMessages,
-                {text: requestInput, isBot: false, iscomponent: false}
+                {text: requestInput, isBot: false}
             ]
             return updatedMessages
         })
 
         let url = null
-        const formData  = new FormData();
 
         if(req === "savecode"){
-            url = new URL("/agent/process-savecode", FETCH_URL);
+            // url = new URL("/agent/process-savecode", FETCH_URL);
             
-            formData.append("code",requestInput) 
+            // formData.append("code",requestInput) 
             
-            if(process_id !== ""){
-                if(confirm === "yes"){ //여기도 input이 아니라 버튼value로 수정할것
-                    formData.append("confirm", true)
-                    formData.append("task_id", process_id)
-                }
-                else if(confirm === "no") {
-                    formData.append("confirm", false)
-                }
-            }
-            await fetch(url,{
-                method: 'POST',
-                body: formData
-            }).then(response=>{
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json(); // 응답 본문을 JSON으로 파싱
-            }).then(async(data)=>{
-                if(data.success){
-                    if(data.mode === "summary"){
-                        set_process(data.task_id)
-                        setMessages((prevMessages)=>[
-                            ...prevMessages,
-                            {text: "<"+data.summary+"> \n 해당 내용대로 저장하시겠습니까?", isBot: true, iscomponent: true}
-                        ])
-                    }
-                    else if(data.mode === "save"){
-                        performToast({msg:"저장되었습니다" , type:"success"})
-                        set_process("")
-                    }
+            // if(process_id !== ""){
+            //     if(confirm === "yes"){ //여기도 input이 아니라 버튼value로 수정할것
+            //         formData.append("confirm", true)
+            //         formData.append("task_id", process_id)
+            //     }
+            //     else if(confirm === "no") {
+            //         formData.append("confirm", false)
+            //     }
+            // }
+            // await fetch(url,{
+            //     method: 'POST',
+            //     body: formData
+            // }).then(response=>{
+            //     if (!response.ok) {
+            //         throw new Error('Network response was not ok');
+            //     }
+            //     return response.json(); // 응답 본문을 JSON으로 파싱
+            // }).then(async(data)=>{
+            //     if(data.success){
+            //         if(data.mode === "summary"){
+            //             set_process(data.task_id)
+            //             setMessages((prevMessages)=>[
+            //                 ...prevMessages,
+            //                 {text: "<"+data.summary+"> \n 해당 내용대로 저장하시겠습니까?", isBot: true, iscomponent: true}
+            //             ])
+            //         }
+            //         else if(data.mode === "save"){
+            //             performToast({msg:"저장되었습니다" , type:"success"})
+            //             set_process("")
+            //         }
 
-                }
-                else{
-                    performToast({msg:"에러"+data.msg , type:"error"})
-                }
+            //     }
+            //     else{
+            //         performToast({msg:"에러"+data.msg , type:"error"})
+            //     }
                 
-            })
+            // })
         }
         else if (req === "chat" && requestInput !== ""){
             let chatRoomId = ""
@@ -318,6 +325,7 @@ export default function MainView() {
 
     const get_chatmsgs = async(item) =>{
         if(item.id !== chat_uid){
+            setMessages([])
             const url = new URL("/api/chat/getChat", FETCH_URL);
             const token = await getToken('tomatoSID')
             fetch(url, {
@@ -337,9 +345,21 @@ export default function MainView() {
             }).then(data=>{
                 if(data.success){
                     const datas = data.content
-                    const modified_datas = datas.map((e)=>{
-                        return {text: e.content, isBot: e.role === "user" ? false : true}
-                    })
+                    let descriptList = []
+                    const modified_datas = datas.reduce((acc, e) => {
+                        if (e.type === "description") {
+                            descriptList.push(e.content);
+                        } else {
+                            if (e.role === "user") {
+                                acc.push({ text: e.content, isBot: false });
+                            } else {
+                                const resultList = [...descriptList];
+                                descriptList = [];
+                                acc.push({ text: e.content, isBot: true, activity_log: resultList });
+                            }
+                        }
+                        return acc;
+                    }, []);
                     setMessages(modified_datas)
                     setchat_uid(item.id)
                 }
@@ -418,11 +438,6 @@ export default function MainView() {
 
     const msg_format = () =>{
         
-    }
-
-    const on_confirm_btn = (value) =>{
-        set_confirm(value)
-        handleSend()
     }
 
 
@@ -511,36 +526,7 @@ export default function MainView() {
                     <AnimatePresence>
                         {messages.map((message, i)=>
                             <Item key={i}>
-                                <div className={message.isBot?"chat bot":"chat"}>
-                                    {message.isBot ? <img className="chatImg" src={gptImgLogo}/> : <img className="chatImg" src={userImgLogo}/> }
-                                    {message.iscomponent ? 
-                                        <div>
-                                            <p className="txt" style={{whiteSpace:"pre-line", textAlign:'left'}} key={i}>
-                                                {message.text}
-                                            </p>
-                                            <Button type="text" onClick={() => on_confirm_btn('yes')} style={{ color: 'white' }}>네</Button>
-                                            <Button type="text" onClick={() => on_confirm_btn("no")} style={{ color: 'white' }}>아니오</Button>
-                                        </div> 
-                                    :
-                                        <p className="txt" style={{whiteSpace:"pre-line", textAlign:'left'}} key={i}>
-                                        {message.text.includes("```") ? (
-                                            <div>
-                                            {
-                                            message.text.split("```").map((part, index) =>
-                                                index % 2 === 0 ? (
-                                                <span key={index}>{part}</span>
-                                                ) : (
-                                                    <Code code={part} language={part.split("\n")[0]} key={index} />
-                                                )
-                                            )}
-                                            </div>
-                                        ) : (
-                                            message.text
-                                        )}
-                                    </p>
-                                    }
-
-                                </div>
+                                <Messages message={message}/>
                             </Item>)}
                     </AnimatePresence>
                     {(answer === "" && isLoading) &&
