@@ -8,12 +8,13 @@ import {
 import {getToken} from './getToken'
 import MainView from "../views/main"
 import LoginView from "../views/login"
+import GptArchiveView from '../views/gptArchive';
 // import Cookies from 'js-cookie';
 
 const RouterInfo = [
 { path: '/', element: <LoginView />, withAuthorization: false },
 { path: '/chat', element: <MainView />, withAuthorization: true },
-// { path: '/signup', element: <Signup />, withAuthorization: false },
+{ path: '/gptArchive', element: <GptArchiveView />, withAuthorization: true }
 ];
 
 const Authorization = ({
@@ -40,8 +41,7 @@ const Authorization = ({
 
 
 };
-//취약점이 있음 반대로 채팅방에서 로그인으로 넘어가면 문제없이 로그인화면으로 넘어감
-//이 부분은 그냥 지우는 방향으로 생각해볼것
+
 const AutoRouter = () => {
     return (
         <Router>

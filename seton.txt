@@ -1,0 +1,9 @@
+# window
+    "electron-start": "wait-on http://localhost:3000 && set ELECTRON_START_URL=http://localhost:3000 && electron .", 
+    "electron-pack": "npm run build && electron-builder build --win portable -c.extraMetadata.main=build/Main.js",
+    "react-start": "set BROWSER=none && npm start",
+
+# mac 
+    "electron-start": "wait-on http://localhost:3000 && ELECTRON_START_URL=http://localhost:3000 electron .",
+    "electron-pack": "npm run build && electron-builder build --mac -c.extraMetadata.main=build/Main.js",
+    "react-start": "BROWSER=none npm start",

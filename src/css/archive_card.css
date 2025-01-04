@@ -1,0 +1,111 @@
+.box{
+    position: relative;
+    border-radius: 20px;
+    transform-style: preserve-3d;
+}
+
+.box .card{
+    position: relative;
+    margin: 20px;
+    background: rgba(255,255,255,0.1);
+    width: 300px;
+    height: 100px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.5);
+    border-top: 1px solid rgba(255,255,255,0.75);
+    border-left: 1px solid rgba(255,255,255,0.75);
+    border-radius: 20px;
+    box-shadow: 0 25px 45px rgba(0,0,0,0.05);
+    transform-style: preserve-3d;
+    transition: 0.2s;
+}
+
+.elements{
+    position: absolute;
+    top: 50px;
+    left: -30px;
+    width: 100px;
+    height: 100px;
+    background: rgba(0,0,0,0.1);
+    transform: translateZ(80px);
+
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.5);
+    border-top: 1px solid rgba(255,255,255,0.75);
+    border-left: 1px solid rgba(255,255,255,0.75);
+    border-radius: 10px;
+    box-shadow: 0 25px 45px rgba(0,0,0,0.05);
+}
+
+.elements.bg{
+    position: absolute;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: 0.5s;
+    pointer-events: none;
+}
+
+.dltBtn{
+    pointer-events: all;
+}
+
+.box:hover .elements.bg{
+    opacity: 1;
+}
+
+.box:hover .card{
+    height: 400px;
+}
+
+.elements.name{
+    top: 40px;
+    left: initial;
+    right: 0;
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+    transform: translateZ(100px);
+    background: transparent;
+    backdrop-filter: blur(0px);
+    border: none;
+    box-shadow: none;
+    color: #000000;
+}
+
+.elements.name h2{
+    font-size: 2rem;
+}
+
+
+.elements.content{
+    top: 235px;
+    left: initial;
+    bottom: 0;
+    right: -20px;
+    width: 85%;
+    min-height: 200px;
+    padding: 10px;
+    transform: translateZ(180px);
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: 0.5s;
+    pointer-events: none;
+}
+
+
+.box:hover .elements.content{
+    top: 135px;
+    opacity: 1;
+}
+
+.elements.content p{
+    position: relative;
+    color: #000000;
+    font-size: 1rem;
+}

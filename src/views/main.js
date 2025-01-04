@@ -1,5 +1,5 @@
 import {useState, useEffect, useRef} from 'react'
-import {Radio, Button, Layout} from 'antd'
+import {Select, Button, Layout} from 'antd'
 import {theme, ConfigProvider} from "antd";
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { Divider, List } from 'antd';
@@ -10,26 +10,41 @@ import gptImgLogo from '../assets/bot.jpg';
 import Messages from '../components/message.js'
 import {useNavigate} from "react-router-dom"
 import { LogoutOutlined } from '@ant-design/icons';
-// import Code from "../components/code";
-// import Cookies from 'js-cookie';
 import ScreenLockView from "./screenlock";
 import {performToast, ConfirmToast} from '../components/toastInfo'
 import {getToken} from '../components/getToken'
 import {toast} from 'react-toastify';
 import "../css/chat_view.css"
+import { createStyles } from 'antd-style';
+
+const useStyle = createStyles(({ prefixCls, css }) => ({
+    linearGradientButton: css`
+      &.${prefixCls}-btn-primary:not([disabled]):not(.${prefixCls}-btn-dangerous) {
+        > span {
+          position: relative;
+        }
+  
+        &::before {
+          content: '';
+          background: linear-gradient(135deg, #6253e1, #04befe);
+          position: absolute;
+          inset: -1px;
+          opacity: 1;
+          transition: all 0.3s;
+          border-radius: inherit;
+        }
+  
+        &:hover::before {
+          opacity: 0;
+        }
+      }
+    `,
+  }));
 
 const {Header} = Layout;
 
-const req_option = [
-    {
-        label: "chat",
-        value: "chat",
-    }
-]
 
 export default function MainView() {
-    const [req, set_req] = useState("chat");
-    const [process_id, set_process] = useState("");
     const [chatRooms, setChatRooms] = useState([]);
     const [chat_uid, setchat_uid] = useState("");
     const navigate = useNavigate();
@@ -37,7 +52,8 @@ export default function MainView() {
     const [input, setInput] = useState("");
     const [answer, setAnswer] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [isLock, setisLock] = useState(false)
+    const [isLock, setisLock] = useState(false);
+    const [tools, setTools] = useState(["search"])
     const [messages, setMessages] = useState([{
         text: "say something!",
         isBot: true,
@@ -47,8 +63,10 @@ export default function MainView() {
 
     const FETCH_URL = process.env.REACT_APP_SERVER_URL
 
+    const { styles } = useStyle();
+
     const onLockScreen = (e) => {
-        if(e.ctrlKey && e.key === "x"){
+        if((e.ctrlKey || e.metaKey)  && e.key === "x"){
             e.preventDefault();
             setisLock(true)
         }
@@ -56,10 +74,6 @@ export default function MainView() {
 
     const onunLockScreen = () => {
         setisLock(false)
-    }
-
-    const onRequestChange = ({ target: { value } }) =>{
-        set_req(value)
     }
 
     const handleOnKeyPress = (e) => {
@@ -119,6 +133,10 @@ export default function MainView() {
             isBot: true,
             activity_log: []
         }])
+    }
+
+    const toolChange = (value) =>{
+        setTools(value)
     }
 
 
@@ -189,50 +207,7 @@ export default function MainView() {
 
         let url = null
 
-        if(req === "savecode"){
-            // url = new URL("/agent/process-savecode", FETCH_URL);
-            
-            // formData.append("code",requestInput) 
-            
-            // if(process_id !== ""){
-            //     if(confirm === "yes"){ //여기도 input이 아니라 버튼value로 수정할것
-            //         formData.append("confirm", true)
-            //         formData.append("task_id", process_id)
-            //     }
-            //     else if(confirm === "no") {
-            //         formData.append("confirm", false)
-            //     }
-            // }
-            // await fetch(url,{
-            //     method: 'POST',
-            //     body: formData
-            // }).then(response=>{
-            //     if (!response.ok) {
-            //         throw new Error('Network response was not ok');
-            //     }
-            //     return response.json(); // 응답 본문을 JSON으로 파싱
-            // }).then(async(data)=>{
-            //     if(data.success){
-            //         if(data.mode === "summary"){
-            //             set_process(data.task_id)
-            //             setMessages((prevMessages)=>[
-            //                 ...prevMessages,
-            //                 {text: "<"+data.summary+"> \n 해당 내용대로 저장하시겠습니까?", isBot: true, iscomponent: true}
-            //             ])
-            //         }
-            //         else if(data.mode === "save"){
-            //             performToast({msg:"저장되었습니다" , type:"success"})
-            //             set_process("")
-            //         }
-
-            //     }
-            //     else{
-            //         performToast({msg:"에러"+data.msg , type:"error"})
-            //     }
-                
-            // })
-        }
-        else if (req === "chat" && requestInput !== ""){
+        if (requestInput !== ""){
             let chatRoomId = ""
             const token = await getToken('tomatoSID')
             try{
@@ -269,7 +244,8 @@ export default function MainView() {
                     body: JSON.stringify({
                         q: requestInput,
                         chat_uid: chat_uid === "" ? chatRoomId : chat_uid,
-                        token: token
+                        token: token,
+                        toolList: tools
                     })
                 }).then(async(response)=>{
                     if(!response.ok){
@@ -436,10 +412,6 @@ export default function MainView() {
     }
 
 
-    const msg_format = () =>{
-        
-    }
-
 
     useEffect(()=>{
         getchats()
@@ -504,16 +476,18 @@ export default function MainView() {
                             <List
                             dataSource={chatRooms}
                             renderItem={(item) => (
-                                <List.Item key={item.id}>
+                                <List.Item 
+                                    style={{'cursor': 'pointer'}} 
+                                    key={item.id} 
+                                    onClick={()=>{
+                                        get_chatmsgs(item)
+                                    }}>
                                 <List.Item.Meta
-                                    // avatar={<Avatar src={item.picture.large} />}
                                     title={item.name}
                                     description={'datetime'}
+                                    
                                 />
-                                <Button onClick={()=>{
-                                    get_chatmsgs(item)
-                                }}>Start</Button>
-                                <Button onClick={()=>{handleDelete(item)}}>Delete</Button>
+                                <Button danger style={{'zIndex': 10}} onClick={()=>{handleDelete(item)}}>Delete</Button>
                                 </List.Item>
                             )}
                             />
@@ -547,7 +521,35 @@ export default function MainView() {
 
 
                 <div className="chatFooter">
-                    <Radio.Group optionType="button" buttonStyle="solid" options={req_option} onChange={onRequestChange} value={req} />
+                    {/* <Radio.Group optionType="button" buttonStyle="solid" options={req_option} onChange={onRequestChange} value={req} /> */}
+                    <ConfigProvider button={{
+                    className: styles.linearGradientButton,
+                    }}>
+                        <Button type="primary" size="large" onClick={()=>navigate('/gptArchive')}>
+                            GPTArchive
+                        </Button>
+
+                    </ConfigProvider>
+
+                    <Select
+                        defaultValue="search"
+                        mode="multiple"
+                        style={{
+                            width: 200,
+                        }}
+                        onChange={toolChange}
+                        options={[
+                            {
+                            value: 'search',
+                            label: 'Google Search',
+                            },
+                            {
+                            value: 'gptArchive_code',
+                            label: 'gptArchive(Code)',
+                            }
+                        ]}
+                    />
+
                     <br />
                     <div className="inp">
                         <input type="text" placeholder="Send a message" onKeyUp={handleOnKeyPress} value={input} onChange={(e)=>{setInput(e.target.value)}}/><Button className="send" type="primary" onClick={handleSend} loading={isLoading} icon={<SendOutlined />}/>
