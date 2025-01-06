@@ -8,7 +8,7 @@ import { AnimatePresence } from "framer-motion";
 import { SendOutlined } from '@ant-design/icons';
 import gptImgLogo from '../assets/bot.jpg';
 import Messages from '../components/message.js'
-import {useNavigate} from "react-router-dom"
+import {useNavigate, useLocation} from "react-router-dom"
 import { LogoutOutlined } from '@ant-design/icons';
 import ScreenLockView from "./screenlock";
 import {performToast, ConfirmToast} from '../components/toastInfo'
@@ -47,6 +47,7 @@ const {Header} = Layout;
 export default function MainView() {
     const [chatRooms, setChatRooms] = useState([]);
     const [chat_uid, setchat_uid] = useState("");
+    const location = useLocation(); // 현재 경로 확인
     const navigate = useNavigate();
     const msgEnd = useRef();
     const [input, setInput] = useState("");
@@ -258,6 +259,7 @@ export default function MainView() {
                     
                 if(chat_uid === ""){
                     url = new URL("/api/chat/createChatName", FETCH_URL);
+                    const token = await getToken('tomatoSID');
                     await fetch(url,{
                         method: 'POST',
                         headers: {
@@ -265,7 +267,8 @@ export default function MainView() {
                         },
                         body: JSON.stringify({
                             getChatHistory: [input, chatHistory],
-                            chat_uid: chatRoomId
+                            chat_uid: chatRoomId,
+                            token: token
                         })
                     }).then(async(response)=>{
                         if(!response.ok){
@@ -420,7 +423,7 @@ export default function MainView() {
         return () =>{
             window.removeEventListener("keydown", onLockScreen)
         }
-    },[])
+    },[location.pathname])
 
     useEffect(()=>{
         msgEnd.current.scrollIntoView();
