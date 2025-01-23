@@ -1,6 +1,6 @@
 {
   "name": "tomatoagentweb",
-  "version": "0.1.1",
+  "version": "0.2.1",
   "private": true,
   "main": "public/Main.js",
   "homepage": "./",
@@ -38,9 +38,9 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "electron-start": "wait-on http://localhost:3000 && ELECTRON_START_URL=http://localhost:3000 electron .",
-    "electron-pack": "npm run build && electron-builder build --mac -c.extraMetadata.main=build/Main.js",
-    "react-start": "BROWSER=none npm start",
+    "electron-start": "wait-on http://localhost:3000 && set ELECTRON_START_URL=http://localhost:3000 && electron .", 
+    "electron-pack": "npm run build && electron-builder build --win portable -c.extraMetadata.main=build/Main.js",
+    "react-start": "set BROWSER=none && npm start",
     "all-start": "concurrently \"npm run react-start\" \"npm run electron-start\""
   },
   "eslintConfig": {

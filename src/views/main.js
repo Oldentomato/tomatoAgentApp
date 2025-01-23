@@ -54,7 +54,7 @@ export default function MainView() {
     const [answer, setAnswer] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [isLock, setisLock] = useState(false);
-    const [tools, setTools] = useState(["search"])
+    const [tools, setTools] = useState(["googleSearch"])
     const [messages, setMessages] = useState([{
         text: "say something!",
         isBot: true,
@@ -174,7 +174,7 @@ export default function MainView() {
                 const text = new TextDecoder("utf-8").decode(value);
                 temp_str += text
                 if(text.includes("~")){
-                    setAnswer("생각중");
+                    // setAnswer("생각중");
                 }
                 else{
                     setAnswer((prevText) => prevText + text);
@@ -183,13 +183,34 @@ export default function MainView() {
             }
             setAnswer("")
             setMessages((prevMessages)=>{
-                // 분리된 결과를 정리
                 const result = temp_str.split(/~+/).map(item => item.trim()).filter(Boolean);
+
+                // 도구 이름과 결과를 activity_log에 저장
+                const activityLog = [];
+                let additionalInfo = "";
+
+                // result를 순회하면서 도구 이름과 결과를 추출
+                result.forEach((item, index) => {
+                    if (item.startsWith('사용한 도구:')) {
+                        const toolName = item.replace('사용한 도구:', '').trim();
+                        const toolResult = result[index + 1]?.startsWith('도구사용 결과:') 
+                            ? result[index + 1].replace('도구사용 결과:', '').trim()
+                            : null;
+
+                        activityLog.push({ toolName, toolResult });
+                    } else if (!item.startsWith('도구사용 결과:')) {
+                        additionalInfo += `${item} `;
+                    }
+                });
 
                 const updatedMessages = [
                     ...prevMessages,
-                    {text: result.at(-1), isBot: true, activity_log: result.slice(0, -1)}
-                ]
+                    {
+                        activity_log: activityLog, // 두 번째 단락 (도구 사용 결과)
+                        text: additionalInfo, // 나머지 정보 (배열 형태로 저장)
+                        isBot: true
+                    }
+                ];
                 chatHistory = temp_str
                 return updatedMessages
                 }
@@ -327,7 +348,7 @@ export default function MainView() {
                     let descriptList = []
                     const modified_datas = datas.reduce((acc, e) => {
                         if (e.type === "description") {
-                            descriptList.push(e.content);
+                            descriptList.push({log: e.content, name: e.name});
                         } else {
                             if (e.role === "user") {
                                 acc.push({ text: e.content, isBot: false });
@@ -535,7 +556,7 @@ export default function MainView() {
                     </ConfigProvider>
 
                     <Select
-                        defaultValue="search"
+                        defaultValue="googleSearch"
                         mode="multiple"
                         style={{
                             width: 200,
@@ -543,11 +564,11 @@ export default function MainView() {
                         onChange={toolChange}
                         options={[
                             {
-                            value: 'search',
+                            value: 'googleSearch',
                             label: 'Google Search',
                             },
                             {
-                            value: 'gptArchive_code',
+                            value: 'codeArchive',
                             label: 'gptArchive(Code)',
                             }
                         ]}

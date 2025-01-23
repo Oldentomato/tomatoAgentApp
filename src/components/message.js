@@ -27,10 +27,17 @@ const Messages = ({message, i}) =>{
 
     const content = (logs) =>{
         return(
-            <div>
+            <div style={{
+                width: "700px", /* 원하는 너비 */
+                maxHeight: "200px", /* 원하는 최대 높이 */
+                overflowY: "auto"}}>
                 {logs.map((e)=>{
                     return(
-                        <p>{e}</p>
+                        <>
+                            <p>사용한 도구: {e.name}</p>
+                            <p>도구 사용 결과: {e.log}</p>
+                        </>
+
                     )
                 })}
                 
