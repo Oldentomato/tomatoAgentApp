@@ -18,3 +18,6 @@
 ![img3](https://github.com/Oldentomato/tomatoAgentApp/blob/main/readme/Animation2.gif?raw=true)  
 ### gptArchive 활용  
 ![img4](https://github.com/Oldentomato/tomatoAgentApp/blob/main/readme/Animation3.gif?raw=true)  
+
+## 공동 개발자  
+[CalaMiTY0311](https://github.com/CalaMiTY0311)
