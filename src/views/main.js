@@ -91,13 +91,12 @@ export default function MainView() {
         const token = await getToken('tomatoSID')
         
         fetch(url,{
-            method: 'POST',
+            method: 'GET',
             headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                token: token
-            })
+                'Content-Type': 'application/json',
+                "Authorization": `Bearer ${token}`
+            }
+            
         }).then(response=>{
             if (!response.ok) {
                 throw new Error('Network response was not ok');
@@ -236,13 +235,11 @@ export default function MainView() {
                 if(chat_uid === ""){
                     url = new URL("/api/chat/newchat", FETCH_URL);
                     await fetch(url,{
-                        method: 'POST',
+                        method: 'GET',
                         headers: {
                             'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            token: token
-                        })
+                            "Authorization": `Bearer ${token}`
+                        }
                     }).then(async(response)=>{
                         if(!response.ok){
                             throw new Error("채팅 생성 통신에 문제가 생겼습니다");
@@ -262,11 +259,11 @@ export default function MainView() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        "Authorization": `Bearer ${token}`
                     },
                     body: JSON.stringify({
                         q: requestInput,
                         chat_uid: chat_uid === "" ? chatRoomId : chat_uid,
-                        token: token,
                         toolList: tools
                     })
                 }).then(async(response)=>{
@@ -285,11 +282,11 @@ export default function MainView() {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            "Authorization": `Bearer ${token}`
                         },
                         body: JSON.stringify({
                             getChatHistory: [input, chatHistory],
-                            chat_uid: chatRoomId,
-                            token: token
+                            chat_uid: chatRoomId
                         })
                     }).then(async(response)=>{
                         if(!response.ok){
@@ -332,10 +329,10 @@ export default function MainView() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    chat_uid: item.id,
-                    token: token
+                    chat_uid: item.id
                 })
             }).then(response=>{
                 if (!response.ok) {
@@ -380,9 +377,9 @@ export default function MainView() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify({
-                token: token,
                 chat_uid: item.id
             })
         }).then(response=>{
@@ -411,13 +408,11 @@ export default function MainView() {
         url = new URL("/api/chat/getChatList", FETCH_URL);
         const token = await getToken('tomatoSID')
         fetch(url,{
-            method: 'POST',
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                token: token
-            })
+                "Authorization": `Bearer ${token}`
+            }
         }).then(response=>{
             if (!response.ok) {
                 throw new Error('Network response was not ok');

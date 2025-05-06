@@ -43,7 +43,7 @@ function createWindow() {
 
         
     // 개발자 도구 열기
-    // win.webContents.openDevTools();
+    win.webContents.openDevTools();
 
 }
 

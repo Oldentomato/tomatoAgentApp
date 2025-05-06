@@ -2,9 +2,10 @@ import "../css/login_view.css"
 import "../css/register_view.css"
 import {useState, useEffect} from 'react'
 import {useNavigate} from "react-router-dom"
-import {getToken} from '../components/getToken'
 // import Cookies from 'js-cookie';
 import {performToast} from '../components/toastInfo'
+import { serverRegister } from "../server/auth"
+import {getToken} from '../components/getToken'
 
 
 export default function LoginView(){
@@ -17,8 +18,8 @@ export default function LoginView(){
 
     const navigate = useNavigate();
 
-    const FETCH_URL = process.env.REACT_APP_SERVER_URL
 
+    const FETCH_URL = process.env.REACT_APP_SERVER_URL
 
     const onIdChnage = (e) =>{
         set_id(e.target.value)
@@ -60,39 +61,15 @@ export default function LoginView(){
 
     const onRegisterClick = async() => {
         if(registerid !== "" && registerpass !== ""){
-            let url = null
-            url = new URL("/api/auth/register", FETCH_URL);
-            const formData  = JSON.stringify({
-                userName: registerid,
-                password: registerpass
-            })
 
-            fetch(url,{
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: formData
-            }).then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json(); // 응답 본문을 JSON으로 파싱
-            })
-            .then(data => {
-                if(data.success){
+            serverRegister().then((result)=>{
+                if(result.success){
                     performToast({msg:"회원가입에 성공했습니다", type:"success"})
                     setisregister(false)
-                    
                 }else{
-                    performToast({msg:"회원가입에 실패했습니다"+data.msg , type:"error"})
+                    performToast({msg:"회원가입에 실패했습니다"+result.msg , type:"error"})
                 }
-
             })
-            .catch(error => {
-                console.error('There was a problem with your fetch operation:', error);
-            });
-
 
         }
         else{
