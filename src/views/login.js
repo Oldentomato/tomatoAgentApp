@@ -4,8 +4,7 @@ import {useState, useEffect} from 'react'
 import {useNavigate} from "react-router-dom"
 // import Cookies from 'js-cookie';
 import {performToast} from '../components/toastInfo'
-import { serverRegister } from "../server/auth"
-import {getToken} from '../components/getToken'
+import { serverRegister, serverLogin, serverCheckUser } from "../server/auth"
 
 
 export default function LoginView(){
@@ -18,8 +17,6 @@ export default function LoginView(){
 
     const navigate = useNavigate();
 
-
-    const FETCH_URL = process.env.REACT_APP_SERVER_URL
 
     const onIdChnage = (e) =>{
         set_id(e.target.value)
@@ -70,7 +67,6 @@ export default function LoginView(){
                     performToast({msg:"회원가입에 실패했습니다"+result.msg , type:"error"})
                 }
             })
-
         }
         else{
             performToast({msg:"id와 password를 모두 입력하십시오" , type:"warning"})
@@ -81,26 +77,7 @@ export default function LoginView(){
 
     const onLoginClick = async() => {
         if(id !== "" && pass !==""){
-            let url = null
-            url = new URL("/api/auth/login", FETCH_URL);
-            const formData  = JSON.stringify({
-                userName: id,
-                password: pass
-            })
-
-            fetch(url,{
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: formData
-            }).then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json(); // 응답 본문을 JSON으로 파싱
-            })
-            .then(data => {
+            serverLogin(id, pass).then(data => {
                 if(data.success){
                     // window.alert(data.user+"님 환영합니다")
                     // Cookies.set('tomatoSID', data.token, { expires: 7, secure: false }) 
@@ -109,8 +86,6 @@ export default function LoginView(){
                         value: data.token
                     })
                     navigate("/chat")
-
-                    
                 }else{
                     performToast({msg:"회원가입에 실패했습니다"+data.msg , type:"error"})
                 }
@@ -119,8 +94,6 @@ export default function LoginView(){
             .catch(error => {
                 performToast({msg:"로그인 에러: "+error , type:"error"})
             });
-
-
         }
         else{
             performToast({msg:"id와 password를 모두 입력하십시오" , type:"warning"})
@@ -130,38 +103,15 @@ export default function LoginView(){
 
 
     useEffect(()=>{
-        const fetchAndSetToken = async () => {
-            const token = await getToken('tomatoSID');
-            return token;
-        };
-        fetchAndSetToken().then((token)=>{
-            if (token !== ''){
-                const url = new URL("/api/auth/checkuser", FETCH_URL);
-    
-                fetch(url,{
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        token: token
-                    })
-                }).then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json(); // 응답 본문을 JSON으로 파싱
-                }).then(data => {
-                    if(data.success){
-                        navigate("/chat")
-                        
-                    }else{
-                        window.electronAPI.deleteCookieByName('tomatoSID')
-                    }
-                })
-                .catch(error => {
-                    console.error('There was a problem with your fetch operation:', error);
-                });
+        serverCheckUser().then(data => {
+            if(data.success){
+                navigate("/chat")
+                
+            }else{
+                if(data.msg !== "no token"){
+                    window.electronAPI.deleteCookieByName('tomatoSID')
+                }
+                
             }
         })
         

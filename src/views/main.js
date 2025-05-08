@@ -16,6 +16,8 @@ import {getToken} from '../components/getToken'
 import {toast} from 'react-toastify';
 import "../css/chat_view.css"
 import { createStyles } from 'antd-style';
+import { serverLogout } from '../server/auth.js';
+import { serverNewChat, serverChat, serverCreateChatName, serverGetChat } from '../server/chat.js';
 
 const useStyle = createStyles(({ prefixCls, css }) => ({
     linearGradientButton: css`
@@ -86,23 +88,7 @@ export default function MainView() {
     };
 
     const onLogout = async() =>{
-        let url = null
-        url = new URL("/api/auth/logout", FETCH_URL);
-        const token = await getToken('tomatoSID')
-        
-        fetch(url,{
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                "Authorization": `Bearer ${token}`
-            }
-            
-        }).then(response=>{
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json(); // 응답 본문을 JSON으로 파싱
-        }).then(async(data)=>{
+        serverLogout().then(async(data)=>{
             if(!data.success){
                 performToast({msg:"로그아웃에 실패했습니다"+data.msg , type:"error"})
             }else{
@@ -226,25 +212,12 @@ export default function MainView() {
             return updatedMessages
         })
 
-        let url = null
 
         if (requestInput !== ""){
             let chatRoomId = ""
-            const token = await getToken('tomatoSID')
             try{
                 if(chat_uid === ""){
-                    url = new URL("/api/chat/newchat", FETCH_URL);
-                    await fetch(url,{
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            "Authorization": `Bearer ${token}`
-                        }
-                    }).then(async(response)=>{
-                        if(!response.ok){
-                            throw new Error("채팅 생성 통신에 문제가 생겼습니다");
-                        }
-                        const data = await response.json();
+                    await serverNewChat().then(data =>{
                         if(data.success){
                             chatRoomId = data.chat_uid
                         }
@@ -253,46 +226,17 @@ export default function MainView() {
                         }
                     })
                 }
-    
-                url = new URL("/api/chat/chat", FETCH_URL);
-                await fetch(url,{
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        "Authorization": `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        q: requestInput,
-                        chat_uid: chat_uid === "" ? chatRoomId : chat_uid,
-                        toolList: tools
-                    })
-                }).then(async(response)=>{
-                    if(!response.ok){
-                        throw new Error("채팅 통신에 문제가 생겼습니다"+response.msg);
-                    }
                     
+                await serverChat(
+                    requestInput,
+                    chat_uid === "" ? chatRoomId : chat_uid,
+                    tools
+                ).then(async(response)=>{
                     await get_res_msg(response)
-                    
                 })
                     
                 if(chat_uid === ""){
-                    url = new URL("/api/chat/createChatName", FETCH_URL);
-                    const token = await getToken('tomatoSID');
-                    await fetch(url,{
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            "Authorization": `Bearer ${token}`
-                        },
-                        body: JSON.stringify({
-                            getChatHistory: [input, chatHistory],
-                            chat_uid: chatRoomId
-                        })
-                    }).then(async(response)=>{
-                        if(!response.ok){
-                            throw new Error("채팅이름생성 통신에 문제가 생겼습니다");
-                        }
-                        const data = await response.json();
+                    await serverCreateChatName(input, chatHistory, chatRoomId).then(data=>{
                         if(data.success){
                             setChatRooms((prev)=>[
                                 ...prev,
@@ -323,23 +267,7 @@ export default function MainView() {
     const get_chatmsgs = async(item) =>{
         if(item.id !== chat_uid){
             setMessages([])
-            const url = new URL("/api/chat/getChat", FETCH_URL);
-            const token = await getToken('tomatoSID')
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    chat_uid: item.id
-                })
-            }).then(response=>{
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json(); // 응답 본문을 JSON으로 파싱
-            }).then(data=>{
+            serverGetChat(item.id).then(data=>{
                 if(data.success){
                     const datas = data.content
                     let descriptList = []

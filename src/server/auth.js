@@ -1,40 +1,128 @@
 import {getToken} from '../components/getToken'
+import axios from 'axios';
 
 const FETCH_URL = process.env.REACT_APP_SERVER_URL
 
 const serverRegister = async(id, pass) =>{
-    let url = new URL("/api/auth/register", FETCH_URL);
-    const formData  = JSON.stringify({
+    const result = await axios.post(FETCH_URL+"/api/auth/register",
+    {
         userName: id,
         password: pass
-    })
-
-    fetch(url,{
-        method: 'POST',
+    },
+    {
         headers: {
-            'Content-Type': 'application/json'
-            
-        },
-        body: formData
-    }).then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
+            "Content-Type": "application/json"
         }
-        return response.json(); // 응답 본문을 JSON으로 파싱
+    }
+    ).catch((err)=>{
+        console.log(err)
+        return {
+            data: {
+                success: false,
+                msg: String(err)
+            }
+        };
     })
-    .then(data => {
-        if(data.success){
-            return {success: true}
-            
-        }else{
 
-            return {success:false, msg:"회원가입에 실패했습니다"+data.msg}
-        }
+    if(result.data.success){
+        return {success: true};
+    }else{
+        return {success: false, msg: result.data.msg};
+    }
 
-    })
-    .catch(error => {
-        console.error('There was a problem with your fetch operation:', error);
-    });
 }
 
-export {serverRegister}
+const serverLogin = async(id, pass) => {
+    const result = await axios.post(FETCH_URL+"/api/auth/login",
+        {
+            userName: id,
+            password: pass
+        },
+        {
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }
+        ).catch((err)=>{
+            console.log(err)
+            return {
+                data: {
+                    success: false,
+                    msg: String(err)
+                }
+            };
+        })
+    
+    if(result.data.success){
+        return {success: true, token: result.data.token};
+    }else{
+        return {success: false, msg: result.data.msg};
+    }
+}
+
+const serverCheckUser = async() => {
+    const token = await getToken('tomatoSID');
+    if (token !== ''){
+        const result = await axios.get(FETCH_URL+"/api/auth/checkuser",
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
+            }
+            ).catch((err)=>{
+                console.log(err)
+                return {
+                    data: {
+                        success: false,
+                        msg: String(err)
+                    }
+                };
+            })
+        
+        if(result.data.success){
+            return {success: true};
+        }else{
+            return {success: false, msg: result.data.msg};
+        }
+    }else{
+        return {success: false, msg: "no token"}
+    }
+
+    
+}
+
+const serverLogout = async() =>{
+    const token = await getToken('tomatoSID');
+    
+    if(token !== ''){
+        const result = await axios.get(FETCH_URL+"/api/auth/logout",
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
+            }
+            ).catch((err)=>{
+                console.log(err)
+                return {
+                    data: {
+                        success: false,
+                        msg: String(err)
+                    }
+                };
+            })
+        
+        if(result.data.success){
+            return {success: true};
+        }else{
+            return {success: false, msg: result.data.msg};
+        }
+    }else{
+        return {success: false, msg: "no token"}
+    }
+    
+}
+
+
+export {serverRegister, serverLogin, serverCheckUser, serverLogout}
