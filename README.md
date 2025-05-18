@@ -20,4 +20,4 @@
 ![img4](https://github.com/Oldentomato/tomatoAgentApp/blob/main/readme/Animation3.gif?raw=true)  
 
 ## 공동 개발자  
-[CalaMiTY0311](https://github.com/CalaMiTY0311)
+[MiTY0311](https://github.com/MiTY0311)
