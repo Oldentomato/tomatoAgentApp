@@ -37,6 +37,11 @@
     box-shadow: 0 25px 45px rgba(0,0,0,0.05);
 }
 
+.elements p{
+    color: white;
+    font-size: large;
+}
+
 .elements.bg{
     position: absolute;
     text-align: center;

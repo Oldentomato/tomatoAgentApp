@@ -17,7 +17,7 @@ import {toast} from 'react-toastify';
 import "../css/chat_view.css"
 import { createStyles } from 'antd-style';
 import { serverLogout } from '../server/auth.js';
-import { serverNewChat, serverChat, serverCreateChatName, serverGetChat } from '../server/chat.js';
+import { serverNewChat, serverChat, serverCreateChatName, serverGetChat, serverDeleteChat, serverGetChatList } from '../server/chat.js';
 
 const useStyle = createStyles(({ prefixCls, css }) => ({
     linearGradientButton: css`
@@ -109,6 +109,8 @@ export default function MainView() {
             }
         }).catch(error => {
             performToast({msg:"로그아웃에 실패했습니다"+error , type:"error"})
+        }).finally(()=>{
+            navigate('/')
         });
     }
 
@@ -170,6 +172,7 @@ export default function MainView() {
             setMessages((prevMessages)=>{
                 const result = temp_str.split(/~+/).map(item => item.trim()).filter(Boolean);
 
+
                 // 도구 이름과 결과를 activity_log에 저장
                 const activityLog = [];
                 let additionalInfo = "";
@@ -182,11 +185,12 @@ export default function MainView() {
                             ? result[index + 1].replace('도구사용 결과:', '').trim()
                             : null;
 
-                        activityLog.push({ toolName, toolResult });
+                        activityLog.push({ name: toolName, log: toolResult });
                     } else if (!item.startsWith('도구사용 결과:')) {
                         additionalInfo += `${item} `;
                     }
                 });
+
 
                 const updatedMessages = [
                     ...prevMessages,
@@ -298,24 +302,7 @@ export default function MainView() {
     }
 
     const deletechat = async(item) =>{
-        let url = null
-        url = new URL("/api/chat/chatDelete", FETCH_URL);
-        const token = await getToken('tomatoSID')
-        await fetch(url,{
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                chat_uid: item.id
-            })
-        }).then(response=>{
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json(); // 응답 본문을 JSON으로 파싱
-        }).then((data)=>{
+        serverDeleteChat(item.id).then((data)=>{
             if(data.success){
                 performToast({msg:item.id+": 삭제되었습니다" , type:"success"})
                 on_new_chat()
@@ -332,21 +319,7 @@ export default function MainView() {
     }
 
     const getchats = async() =>{
-        let url = null
-        url = new URL("/api/chat/getChatList", FETCH_URL);
-        const token = await getToken('tomatoSID')
-        fetch(url,{
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                "Authorization": `Bearer ${token}`
-            }
-        }).then(response=>{
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json(); // 응답 본문을 JSON으로 파싱
-        }).then(data=>{
+        serverGetChatList().then(data=>{
             if(data.success){
                 const result_data = data.content.map(item=>{
                     return {'id': item.chat_id, 'name': item.chat_name}
@@ -469,33 +442,36 @@ export default function MainView() {
 
                 <div className="chatFooter">
                     {/* <Radio.Group optionType="button" buttonStyle="solid" options={req_option} onChange={onRequestChange} value={req} /> */}
-                    <ConfigProvider button={{
-                    className: styles.linearGradientButton,
-                    }}>
-                        <Button type="primary" size="large" onClick={()=>navigate('/gptArchive')}>
-                            GPTArchive
-                        </Button>
+                    <div style={{display:"flex"}}>
+                        <ConfigProvider button={{
+                        className: styles.linearGradientButton,
+                        }}>
+                            <Button type="primary" size="large" onClick={()=>navigate('/gptArchive')}>
+                                GPTArchive
+                            </Button>
 
-                    </ConfigProvider>
+                        </ConfigProvider>
 
-                    <Select
-                        defaultValue="googleSearch"
-                        mode="multiple"
-                        style={{
-                            width: 200,
-                        }}
-                        onChange={toolChange}
-                        options={[
-                            {
-                            value: 'googleSearch',
-                            label: 'Google Search',
-                            },
-                            {
-                            value: 'codeArchive',
-                            label: 'gptArchive(Code)',
-                            }
-                        ]}
-                    />
+                        <Select
+                            defaultValue="googleSearch"
+                            mode="multiple"
+                            style={{
+                                width: 200,
+                            }}
+                            onChange={toolChange}
+                            options={[
+                                {
+                                value: 'googleSearch',
+                                label: 'Google Search',
+                                },
+                                {
+                                value: 'codeArchive',
+                                label: 'gptArchive(Code)',
+                                }
+                            ]}
+                        />
+                    </div>
+
 
                     <br />
                     <div className="inp">

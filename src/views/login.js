@@ -87,7 +87,7 @@ export default function LoginView(){
                     })
                     navigate("/chat")
                 }else{
-                    performToast({msg:"회원가입에 실패했습니다"+data.msg , type:"error"})
+                    performToast({msg:"로그인에 실패했습니다"+data.msg , type:"error"})
                 }
 
             })

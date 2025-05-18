@@ -119,5 +119,59 @@ const serverGetChat = async(itemId) => {
     }
 }
 
+const serverDeleteChat = async(chat_uid) => {
+    const token = await getToken('tomatoSID');
+    if (token !== ''){
+        const result = await axios.delete(FETCH_URL+"/api/chat/chatDelete/"+chat_uid,
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
+            }
+            ).catch((err)=>{
+                return {
+                    data: {
+                        success: false,
+                        msg: String(err)
+                    }
+                };
+            })
+        
+        if(result.data.success){
+            return {success: true};
+        }else{
+            return {success: false, msg: result.data.msg};
+        }
+    }
+}
 
-export {serverNewChat, serverChat, serverCreateChatName, serverGetChat}
+const serverGetChatList = async() => {
+    const token = await getToken('tomatoSID');
+    if (token !== ''){
+        const result = await axios.get(FETCH_URL+"/api/chat/getChatList",
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
+            }
+            ).catch((err)=>{
+                return {
+                    data: {
+                        success: false,
+                        msg: String(err)
+                    }
+                };
+            })
+        
+        if(result.data.success){
+            return {success: true, content: result.data.content};
+        }else{
+            return {success: false, msg: result.data.msg};
+        }
+    }
+}
+
+
+export {serverNewChat, serverChat, serverCreateChatName, serverGetChat, serverDeleteChat, serverGetChatList}

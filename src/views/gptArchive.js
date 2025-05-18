@@ -4,11 +4,12 @@ import {performToast} from '../components/toastInfo'
 import ArchiveItem from '../components/archiveItem.js'
 import { AnimatePresence } from "framer-motion";
 import ScreenLockView from "./screenlock";
-import {Layout, ConfigProvider, Button, Drawer, Select, theme} from 'antd';
+import {Layout, ConfigProvider, Button, Drawer, Select, theme, Input} from 'antd';
 import { createStyles } from 'antd-style';
-import {getToken} from '../components/getToken'
 import {useNavigate} from "react-router-dom"
 import Item from '../components/Item'
+import { serverDeleteArchive, serverSaveArchive, serverGetArchive } from "../server/archive.js";
+const { TextArea } = Input;
 
 const {Header} = Layout;
 
@@ -50,7 +51,6 @@ export default function GptArchiveView(){
 
     const {defualtAlgorithm, darkAlgorithm} = theme;
 
-    const FETCH_URL = process.env.REACT_APP_SERVER_URL
 
 
     const showDrawer = () => {
@@ -68,26 +68,7 @@ export default function GptArchiveView(){
     }
 
     const onDelete = async(id,category) => {
-        let url = null
-        setDltLoading(true)
-        url = new URL("/api/archive/remove", FETCH_URL);
-        const token = await getToken('tomatoSID')
-        await fetch(url,{
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                token: token,
-                contentId: id,
-                category: category
-            })
-        }).then(response=>{
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json(); // 응답 본문을 JSON으로 파싱
-        }).then((data)=>{
+        serverDeleteArchive(id, category).then((data)=>{
             if(data.success){
                 performToast({msg: id+": 삭제에 성공했습니다", type:"success"})
                 setDltLoading(false);
@@ -109,28 +90,7 @@ export default function GptArchiveView(){
     const saveArchive = async() => {
         if(inputContent !== "" && inputSummary !== ""){
             setAddLoading(true);
-            let url = null
-            url = new URL("/api/archive/add", FETCH_URL);
-            const token = await getToken('tomatoSID')
-            await fetch(url,{
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    token: token,
-                    inputContent: {
-                        "query": inputSummary,
-                        "content": inputContent,
-                        "category": category
-                    }
-                })
-            }).then(response=>{
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json(); // 응답 본문을 JSON으로 파싱
-            }).then((data)=>{
+            serverSaveArchive(inputSummary, category, inputContent).then((data)=>{
                 if(data.success){
                     performToast({msg:"성공적으로 추가되었습니다" , type:"success"})
                     setAddLoading(false);
@@ -161,25 +121,13 @@ export default function GptArchiveView(){
     }
 
     const getArchive = async() => {
-        let url = null
-        url = new URL("/api/archive/get", FETCH_URL);
-        const token = await getToken('tomatoSID')
-        await fetch(url,{
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                token: token
-            })
-        }).then(response=>{
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json(); // 응답 본문을 JSON으로 파싱
-        }).then((data)=>{
+        serverGetArchive().then((data)=>{
             if(data.success){
-                setContents(data.content)
+                const listData = Object.entries(data.content).map(([id, value]) => ({
+                    id,
+                    ...value
+                }));
+                setContents(listData)
             }
             else{
                 performToast({msg:"내용을 가져오는데 문제가 생겼습니다: "+data.msg , type:"error"})
@@ -231,9 +179,9 @@ export default function GptArchiveView(){
                 <ConfigProvider theme={{algorithm: darkAlgorithm}}>
                     <Drawer title="Add Content" onClose={onClose} open={open}>
                         <p>summary</p>
-                        <input type="text" placeholder="summary" value={inputSummary} onChange={(e)=>{setInputSummary(e.target.value)}}/>
+                        <Input type="text" placeholder="summary" value={inputSummary} onChange={(e)=>{setInputSummary(e.target.value)}}/>
                         <p>content</p>
-                        <input type="text" placeholder="content" value={inputContent} onChange={(e)=>{setInputContent(e.target.value)}}/>
+                        <TextArea rows={10} placeholder="content" value={inputContent} onChange={(e)=>{setInputContent(e.target.value)}}/>
                         <p>category</p>
                         <Select
                             defaultValue="code"
